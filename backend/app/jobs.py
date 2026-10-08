@@ -137,5 +137,4 @@ class JobStore:
 
 from .config import settings  # noqa: E402
 
-store = JobStore(settings.database_url)   # pool is created closed; main.py opens it at startup
-# store = JobStore.__new__(JobStore)   # replaced below; keeps `from .jobs import store` working
+store = JobStore(settings.database_url)   

@@ -56,4 +56,3 @@ const Contact = () => {
 };
 
 export default Contact;
-{ /* Saving for future <input type="hidden" name="access_key" value="62b50ba4-1f85-4441-91be-383c1cdbdb35"></input> */}

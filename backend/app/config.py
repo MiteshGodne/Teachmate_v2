@@ -7,8 +7,8 @@ class Settings(BaseSettings):
 
     allowed_origins: str = "http://localhost:5173"   # set your real domain in production
     data_dir: Path = Path("data")
-    database_url: str = "postgresql://teachmate:teachmate@localhost:5432/teachmate"
-    redis_url: str = "redis://localhost:6379"
+    database_url: str = "postgresql://teachmate:teachem@localhost:5432/teachmate_db"
+    redis_url: str = "rediss://default:gQAAAAAAA0QyAAIgcDIzNGZmYmQzOTNmZTk0YjBkOTQ3NjRhYzJlMmY0OGZjOQ@tops-lacewing-214066.upstash.io:6379"
 
     # Limits
     max_upload_mb: int = 50
