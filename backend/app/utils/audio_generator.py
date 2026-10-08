@@ -32,28 +32,30 @@ def _gtts(text: str, lang: str, out: Path):
     gTTS(text=text, lang=lang).save(str(out))
 
 
+def _key(provider, lang: str, text: str) -> str:
+    voice = VOICES[lang] if provider is _edge else "gtts"
+    return hashlib.sha256(f"{provider.__name__}|{voice}|{lang}|{text}".encode()).hexdigest()
+
+
 def synth_one(text: str, lang: str, retries: int = 3) -> Path | None:
     if not text.strip():
-        return None  # silent slide, handled by the video step
-
+        return None
     settings.cache_dir.mkdir(parents=True, exist_ok=True)
-    key = hashlib.sha256(f"{settings.tts_provider}|{lang}|{text}".encode()).hexdigest()
-    cached = settings.cache_dir / f"{key}.mp3"
-    if cached.exists() and cached.stat().st_size > 0:
-        return cached  # re-uploads of the same slide cost nothing
-
     order = [_edge, _gtts] if settings.tts_provider == "edge" else [_gtts, _edge]
     last_err = None
     for provider in order:
+        cached = settings.cache_dir / f"{_key(provider, lang, text)}.mp3"
+        if cached.exists() and cached.stat().st_size > 0:
+            return cached
         for attempt in range(retries):
-            tmp = cached.with_name(f"{key}.{uuid.uuid4().hex}.tmp.mp3")
+            tmp = cached.with_name(f"{cached.stem}.{uuid.uuid4().hex}.tmp.mp3")
             try:
                 provider(text, lang, tmp)
                 if tmp.stat().st_size == 0:
                     raise RuntimeError("empty audio")
                 tmp.replace(cached)
                 return cached
-            except Exception as e:  # network errors, rate limits, blocked IPs
+            except Exception as e:
                 last_err = e
                 tmp.unlink(missing_ok=True)
                 log.warning("TTS %s attempt %d failed: %s", provider.__name__, attempt + 1, e)
@@ -65,7 +67,12 @@ def generate_audio_files(scripts: list[str], lang: str, report) -> list[Path | N
     results: list[Path | None] = [None] * len(scripts)
     with ThreadPoolExecutor(max_workers=settings.tts_workers) as pool:
         futures = {pool.submit(synth_one, s, lang): i for i, s in enumerate(scripts)}
-        for n, fut in enumerate(as_completed(futures), 1):
-            results[futures[fut]] = fut.result()  # re-raises PipelineError
-            report("narrating", 40 + 30 * n / len(scripts))
+        try:
+            for n, fut in enumerate(as_completed(futures), 1):
+                results[futures[fut]] = fut.result()
+                report("narrating", 40 + 30 * n / len(scripts))
+        except Exception:
+            for f in futures:
+                f.cancel()      # don't keep synthesizing slides for a doomed job
+            raise
     return results

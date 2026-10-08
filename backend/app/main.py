@@ -1,9 +1,4 @@
-import logging
-import re
-import shutil
-import threading
-import time
-import uuid
+import logging, re, shutil, threading, time, uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -59,7 +54,7 @@ async def lifespan(app: FastAPI):
     executor.shutdown(wait=False, cancel_futures=True)
 
 
-app = FastAPI(title="Teach-Mate API", lifespan=lifespan)
+app = FastAPI(title="TeachMate API", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,
@@ -111,7 +106,7 @@ async def create_job(
                 if size > limit:
                     raise HTTPException(413, f"File too large. Maximum is {settings.max_upload_mb} MB.")
                 await run_in_threadpool(out.write, chunk)
-    except HTTPException:
+    except BaseException:
         shutil.rmtree(work.parent, ignore_errors=True)
         raise
 

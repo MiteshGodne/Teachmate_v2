@@ -10,7 +10,8 @@ ZIP_MAGIC = b"PK\x03\x04"
 
 
 def validate_upload(path: Path, ext: str) -> None:
-    head = path.read_bytes()[:8] if path.stat().st_size else b""
+    with open(path, "rb") as f:
+        head = f.read(8)
     if not head:
         raise PipelineError("The uploaded file is empty.")
 

@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    allowed_origins: str = "http://localhost:5173,https://teach-mate-web-app.vercel.app"
+    allowed_origins: str = "http://localhost:5173,https://teachmate-web-app.vercel.app"
     data_dir: Path = Path("data")
 
     max_upload_mb: int = 50
