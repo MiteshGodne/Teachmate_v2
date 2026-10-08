@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="footer-container">
 
         <div className="footer-brand">
-          <h2>Teach-Mate</h2>
+          <h2>TeachMate</h2>
           <p>Convert your PowerPoint presentations to videos .</p>
         </div>
 
@@ -20,19 +20,17 @@ const Footer = () => {
             <li><Link to="/contact">Contact</Link></li>
           </ul>
         </div>
-
+        
         <div className="footer-social">
-          <h4>Follow Us</h4>
+          <h4>Source</h4>
           <div className="social-icons">
-            <a href="#" aria-label="Twitter">🐦</a>
-            <a href="#" aria-label="Instagram">📸</a>
-            <a href="#" aria-label="LinkedIn">💼</a>
+            <a href="https://github.com/YOUR_USERNAME/teachmate-v2" target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
         </div>
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Teach-Mate. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} TeachMate. All rights reserved.</p>
       </div>
     </footer>
   );

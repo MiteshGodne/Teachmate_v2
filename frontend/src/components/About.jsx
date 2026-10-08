@@ -1,53 +1,57 @@
 import "../css/About.css";
 
-const teamMembers = [
-  {
-    name: "Mitesh Godne",
-    role: "Full Stack Developer",
-    image: "https://avatars.githubusercontent.com/u/129673121?v=",
-  },
+const AUTHOR = {
+  name: "Mitesh Godne",
+  github: "https://github.com/MiteshGodne/teachmate_v2",
+};
+
+const features = [
+  ["Many formats", "PPTX, PPT, PPSX, ODP and PDF. Legacy files are converted automatically."],
+  ["Smart narration", "Uses your speaker notes first, falls back to slide text. Empty slides stay silent."],
+  ["Six languages", "English, Hindi, Marathi, Spanish, French and German voices."],
+  ["Subtitles included", "Download an .srt file synced to the narration."],
+  ["Private by default", "Your upload is deleted as soon as processing ends; results expire after about an hour."],
 ];
 
-const About = () => {
-  return (
-    <div className="about-container">
-      {/* Hero Section */}
-      <section className="hero-section">
-        <h1>About Us</h1>
-        <p>
-          We are a tech-driven team building a smart tool that converts
-          PowerPoint presentations into MP4 videos with audioscript. Our goal is
-          to make content creation faster, easier, and more accessible for
-          educators and professionals.
-        </p>
-      </section>
+const stack = ["React + Vite", "FastAPI", "LibreOffice", "FFmpeg", "edge-tts / gTTS", "Docker"];
 
-      {/* Team Section */}
-      <section className="team-section">
-        <h2>Meet Our Team</h2>
-        <div className="team-grid">
-          {teamMembers.map((member, index) => (
-            <div className="team-member" key={index}>
-              <img src={member.image} alt={`${member.name}`} />
-              <h3>{member.name}</h3>
-              <p>{member.role}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+const About = () => (
+  <div className="about-container">
+    <section className="hero-section">
+      <h1>About Teach-Mate</h1>
+      <p>
+        TeachMate turns slide decks into narrated MP4 lectures. It was built to help
+        educators publish video lessons without recording anything.
+      </p>
+    </section>
 
-      {/* Mission Section */}
-      <section className="mission-section">
-        <h2>Our Mission</h2>
-        <p>
-          To simplify and automate the creation of video lectures by converting
-          PowerPoint presentations into engaging MP4 videos with audioscript ,
-          making content delivery easier, faster, and more accessible for
-          educators and learners.
-        </p>
-      </section>
-    </div>
-  );
-};
+    <section>
+      <h2>What it does</h2>
+      <div className="feature-grid">
+        {features.map(([title, text]) => (
+          <div className="feature" key={title}>
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section>
+      <h2>Built with</h2>
+      <ul className="stack">
+        {stack.map((s) => <li key={s}>{s}</li>)}
+      </ul>
+    </section>
+
+    <section>
+      <h2>Who built it</h2>
+      <p>
+        Designed and developed by {AUTHOR.name} as a solo project.{" "}
+        <a href={AUTHOR.github} target="_blank" rel="noopener noreferrer">View the source on GitHub</a>.
+      </p>
+    </section>
+  </div>
+);
 
 export default About;

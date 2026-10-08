@@ -8,7 +8,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-logo">
-        <Link to="/">Teach-Mate</Link>
+        <Link to="/">TeachMate</Link>
       </div>
 
       <div className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>

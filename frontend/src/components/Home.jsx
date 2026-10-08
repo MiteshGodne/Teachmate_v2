@@ -6,7 +6,7 @@ function Home() {
       <h1>
         Convert PowerPoint to <span className="span">MP4</span>
       </h1>
-      <p>Save PPT as MP4 Effortlessly with Teach-mate.</p>
+      <p>Generate MP4 Lectures from PPTs or PDFs Effortlessly with TeachMate.</p>
       <div className="button-container">
         <Link to="/upload" className="button btn btn-primary">Get Started</Link>
         <Link to="/about" className="button btn-secondary btn">Learn More</Link>   

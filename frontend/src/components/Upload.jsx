@@ -37,7 +37,7 @@ const Upload = () => {
   const busy = phase === "uploading" || phase === "processing";
 
   const pickFile = (f) => {
-    if (!f) return;
+    if (!f || busy) return;
     const ext = "." + f.name.split(".").pop().toLowerCase();
     if (!ALLOWED.includes(ext)) return setError(`Unsupported file type. Use ${ALLOWED.join(", ")}`);
     if (f.size > MAX_MB * 1024 * 1024) return setError(`File is too large (max ${MAX_MB} MB).`);
