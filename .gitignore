@@ -1,0 +1,16 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+
+# Runtime data
+data/
+uploads/
+
+# Node
+node_modules/
+dist/
+build/
+.env.local

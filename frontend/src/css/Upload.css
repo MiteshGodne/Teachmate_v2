@@ -1,0 +1,198 @@
+/* src/styles.css */
+.upload-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+}
+
+.upload-heading {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #4a90e2;
+  text-align: center;
+}
+
+.drag-drop-area {
+  width: 100%;
+  max-width: 600px;
+  height: 300px;
+  border: 2px dashed #4a90e2;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9f9f9;
+  position: relative;
+  transition: background-color 0.3s ease;
+  margin-bottom: 20px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.drag-drop-area p {
+  font-size: 1.1rem;
+  color: #666;
+  text-align: center;
+}
+
+.drag-drop-area.active {
+  background-color: #e3f2fd;
+}
+
+.file-input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.upload-button,
+.remove-button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.upload-button:hover,
+.remove-button:hover {
+  background-color: #357ab9;
+}
+
+.upload-button:disabled,
+.remove-button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+.progress-bar {
+  width: 100%;
+  max-width: 400px;
+  height: 20px;
+  background-color: #e3e3e3;
+  border-radius: 10px;
+  margin-top: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress {
+  height: 100%;
+  background-color: #4a90e2;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+  .upload-heading {
+    font-size: 1.5rem;
+  }
+
+  .drag-drop-area {
+    height: 250px;
+    padding: 15px;
+  }
+
+  .progress-bar {
+    max-width: 90%;
+  }
+
+  .upload-button,
+  .remove-button {
+    padding: 8px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .drag-drop-area {
+    height: 200px;
+    padding: 10px;
+  }
+
+  .upload-heading {
+    font-size: 1.3rem;
+  }
+
+  .drag-drop-area p {
+    font-size: 1rem;
+  }
+
+  .upload-button,
+  .remove-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.options label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.options select {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.error-box {
+  margin-top: 1rem;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #fdecea;
+  color: #b3261e;
+  max-width: 600px;
+}
+
+.status-text {
+  margin-top: 10px;
+  color: #555;
+  text-align: center;
+}
+
+.result {
+  margin-top: 2rem;
+  width: 100%;
+  text-align: center;
+}
+
+.result .upload-button {
+  text-decoration: none;
+  display: inline-block;
+}

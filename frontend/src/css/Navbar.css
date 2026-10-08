@@ -1,0 +1,20 @@
+.navbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.8rem 5rem; position: sticky; top: 0; z-index: 1000;
+  background-image: linear-gradient(to right, #434343 0%, black 100%);
+}
+.navbar-logo a { color: var(--main-color); font-size: 2rem; font-weight: bold; text-decoration: none; }
+.navbar-links { list-style: none; display: flex; gap: 1.2rem; }
+.navbar-links li a { color: #fff; text-decoration: none; transition: color 0.3s; }
+.navbar-links li a:hover { color: var(--main-color); }
+.menu-toggle { display: none; font-size: 1.8rem; cursor: pointer; color: #fff; }
+
+@media screen and (max-width: 768px) {
+  .navbar { padding: 0.8rem 1.2rem; }
+  .menu-toggle { display: block; }
+  .navbar-links {
+    flex-direction: column; background-color: #444; position: absolute;
+    top: 100%; right: 0; width: 200px; display: none; padding: 1rem;
+  }
+  .navbar-links.active { display: flex; }
+}
