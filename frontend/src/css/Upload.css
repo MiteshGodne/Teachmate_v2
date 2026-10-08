@@ -1,18 +1,16 @@
-/* src/styles.css */
 .upload-page {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   margin-top: 50px;
-  font-family: Arial, sans-serif;
   padding: 2rem;
 }
 
 .upload-heading {
   font-size: 2rem;
   margin-bottom: 20px;
-  color: #4a90e2;
+  color: var(--main-color);
   text-align: center;
 }
 

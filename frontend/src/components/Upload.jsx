@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "../css/Upload.css";
 import VideoPlayer from "./VideoPlayer";
+import useJobEvents from "../hooks/useJobEvents";
 import { API_URL } from "../config";
 
-const MAX_MB = 50;
-const ALLOWED = [".pptx", ".ppt", ".ppsx", ".odp", ".pdf"];
-const LANGUAGES = [
-  ["en", "English"], ["hi", "Hindi"], ["mr", "Marathi"],
-  ["es", "Spanish"], ["fr", "French"], ["de", "German"],
-];
+const DEFAULT_CFG = {
+  max_upload_mb: 50,
+  extensions: [".pptx", ".ppt", ".ppsx", ".odp", ".pdf"],
+  languages: [["en", "English"], ["hi", "Hindi"], ["mr", "Marathi"],
+              ["es", "Spanish"], ["fr", "French"], ["de", "German"]],
+};
 const SCRIPT_MODES = [
   ["auto", "Speaker notes, else slide text"],
   ["notes", "Speaker notes only"],
@@ -23,6 +24,7 @@ const STAGES = {
 };
 
 const Upload = () => {
+  const [cfg, setCfg] = useState(DEFAULT_CFG);
   const [file, setFile] = useState(null);
   const [language, setLanguage] = useState("en");
   const [scriptMode, setScriptMode] = useState("auto");
@@ -30,52 +32,44 @@ const Upload = () => {
   const [phase, setPhase] = useState("idle"); // idle | uploading | processing | done | error
   const [uploadPct, setUploadPct] = useState(0);
   const [jobId, setJobId] = useState(null);
-  const [job, setJob] = useState(null);
   const [error, setError] = useState("");
   const abortRef = useRef(null);
 
+  const { job, connectionError } = useJobEvents(jobId);
   const busy = phase === "uploading" || phase === "processing";
+
+  // Ask the backend for its limits so the UI never disagrees with the server
+  useEffect(() => {
+    axios.get(`${API_URL}/api/config`).then(({ data }) => setCfg(data)).catch(() => {});
+  }, []);
+
+  // React to live job updates
+  useEffect(() => {
+    if (!job) return;
+    if (job.status === "done") setPhase("done");
+    else if (job.status === "failed") {
+      setError(job.error || "Processing failed.");
+      setPhase("error");
+    }
+  }, [job]);
+
+  useEffect(() => {
+    if (connectionError) {
+      setError(connectionError);
+      setPhase("error");
+    }
+  }, [connectionError]);
 
   const pickFile = (f) => {
     if (!f || busy) return;
     const ext = "." + f.name.split(".").pop().toLowerCase();
-    if (!ALLOWED.includes(ext)) return setError(`Unsupported file type. Use ${ALLOWED.join(", ")}`);
-    if (f.size > MAX_MB * 1024 * 1024) return setError(`File is too large (max ${MAX_MB} MB).`);
+    if (!cfg.extensions.includes(ext)) return setError(`Unsupported file type. Use ${cfg.extensions.join(", ")}`);
+    if (f.size > cfg.max_upload_mb * 1024 * 1024) return setError(`File is too large (max ${cfg.max_upload_mb} MB).`);
     setError("");
     setFile(f);
     setPhase("idle");
     setJobId(null);
-    setJob(null);
   };
-
-  // Poll job status; the cleanup function stops polling on unmount or new job
-  useEffect(() => {
-    if (!jobId) return;
-    let stopped = false;
-    let timer;
-    const poll = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/api/jobs/${jobId}`);
-        if (stopped) return;
-        setJob(data);
-        if (data.status === "done") return setPhase("done");
-        if (data.status === "failed") {
-          setError(data.error || "Processing failed.");
-          return setPhase("error");
-        }
-      } catch (e) {
-        if (stopped) return;
-        if (e.response?.status === 404) {
-          setError("This job expired or the server restarted. Please upload again.");
-          return setPhase("error");
-        }
-        // transient network error: keep polling
-      }
-      timer = setTimeout(poll, 1500);
-    };
-    poll();
-    return () => { stopped = true; clearTimeout(timer); };
-  }, [jobId]);
 
   const handleSubmit = async () => {
     if (!file) return;
@@ -84,20 +78,26 @@ const Upload = () => {
     form.append("language", language);
     form.append("script_mode", scriptMode);
 
-    abortRef.current = new AbortController();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setPhase("uploading");
     setUploadPct(0);
     setError("");
     try {
       // Don't set Content-Type manually: the browser must add the multipart boundary
       const { data } = await axios.post(`${API_URL}/api/jobs`, form, {
-        signal: abortRef.current.signal,
+        signal: controller.signal,
         onUploadProgress: (e) => e.total && setUploadPct(Math.round((e.loaded * 100) / e.total)),
       });
+      if (controller.signal.aborted) {
+        // User hit Cancel just as the server accepted the file: cancel that job too
+        axios.delete(`${API_URL}/api/jobs/${data.job_id}`).catch(() => {});
+        return;
+      }
       setPhase("processing");
       setJobId(data.job_id);
     } catch (e) {
-      if (axios.isCancel(e)) return setPhase("idle");
+      if (axios.isCancel(e)) return;           // reset() already cleaned the screen
       setError(e.response?.data?.detail || "Could not reach the server. Please try again.");
       setPhase("error");
     }
@@ -106,11 +106,15 @@ const Upload = () => {
   const reset = () => {
     abortRef.current?.abort();
     if (jobId) axios.delete(`${API_URL}/api/jobs/${jobId}`).catch(() => {});
-    setFile(null); setJobId(null); setJob(null); setError(""); setPhase("idle"); setUploadPct(0);
+    setFile(null); setJobId(null); setError(""); setPhase("idle"); setUploadPct(0);
   };
 
   const progress = phase === "uploading" ? uploadPct : job?.progress ?? 0;
-  const label = phase === "uploading" ? `Uploading… ${uploadPct}%` : STAGES[job?.stage] ?? "Starting…";
+  let label;
+  if (phase === "uploading") label = uploadPct >= 100 ? "Finishing upload…" : `Uploading… ${uploadPct}%`;
+  else if (job?.status === "queued")
+    label = job.queue_position > 1 ? `Waiting in queue (position ${job.queue_position})…` : STAGES.queued;
+  else label = STAGES[job?.stage] ?? "Starting…";
   const base = `${API_URL}/api/jobs/${jobId}`;
 
   return (
@@ -123,10 +127,11 @@ const Upload = () => {
         onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
         onDrop={(e) => { e.preventDefault(); setDragActive(false); pickFile(e.dataTransfer.files?.[0]); }}
       >
-        <p>{file ? `Selected: ${file.name}` : `Drag and drop a presentation here, or click to browse (${ALLOWED.join(", ")})`}</p>
+        <p>{file ? `Selected: ${file.name}` : `Drag and drop a presentation here, or click to browse (${cfg.extensions.join(", ")})`}</p>
         <input
           type="file"
-          accept={ALLOWED.join(",")}
+          aria-label="Choose a presentation file"
+          accept={cfg.extensions.join(",")}
           className="file-input"
           disabled={busy}
           onChange={(e) => { pickFile(e.target.files[0]); e.target.value = ""; }}
@@ -136,7 +141,7 @@ const Upload = () => {
       <div className="options">
         <label>Language
           <select value={language} onChange={(e) => setLanguage(e.target.value)} disabled={busy}>
-            {LANGUAGES.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+            {cfg.languages.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
           </select>
         </label>
         <label>Narration source
@@ -159,12 +164,15 @@ const Upload = () => {
 
       {busy && (
         <>
-          <div className="progress-bar"><div className="progress" style={{ width: `${progress}%` }} /></div>
+          <div className="progress-bar" role="progressbar"
+               aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+            <div className="progress" style={{ width: `${progress}%` }} />
+          </div>
           <p className="status-text">{label}</p>
         </>
       )}
 
-      {phase === "done" && (
+      {phase === "done" && job && (
         <div className="result">
           <h2>Your lecture is ready</h2>
           <p className="status-text">{job.slides} slides · {Math.round(job.duration)}s. Files are deleted after about an hour.</p>
