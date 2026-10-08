@@ -3,6 +3,7 @@ import re
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import math
 
 from ..config import settings
 from ..errors import PipelineError
@@ -44,7 +45,8 @@ def make_segment(image: Path, audio: Path | None, out: Path) -> tuple[float, flo
     else:
         speech = 0.0
         audio_in = ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"]
-    seg = (speech + END_PAD) if audio else settings.silent_slide_seconds
+    # seg = (speech + END_PAD) if audio else settings.silent_slide_seconds
+    seg = math.ceil(seg * FPS) / FPS
 
     _run([
         "ffmpeg", "-y", "-loglevel", "error",

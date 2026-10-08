@@ -58,7 +58,7 @@ def extract_ppt_content(path: Path) -> list[dict]:
 def extract_pdf_content(path: Path) -> list[dict]:
     try:
         reader = PdfReader(str(path))
-        if reader.is_encrypted:
+        if reader.is_encrypted and reader.decrypt("") == 0:
             raise PipelineError("This PDF is password-protected.")
         return [
             {"index": i + 1, "hidden": False, "notes": "", "body": (p.extract_text() or "").strip()}

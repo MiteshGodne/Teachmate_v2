@@ -6,3 +6,4 @@ python-pptx>=1.0
 pypdf>=4.0
 gTTS>=2.5
 edge-tts>=6.1
+cryptography
