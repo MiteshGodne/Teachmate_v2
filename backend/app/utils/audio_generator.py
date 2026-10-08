@@ -1,5 +1,5 @@
 import asyncio
-import hashlib
+import hashlib, re
 import logging
 import time
 import uuid
@@ -36,9 +36,9 @@ def _key(provider, lang: str, text: str) -> str:
     voice = VOICES[lang] if provider is _edge else "gtts"
     return hashlib.sha256(f"{provider.__name__}|{voice}|{lang}|{text}".encode()).hexdigest()
 
-
 def synth_one(text: str, lang: str, retries: int = 3) -> Path | None:
-    if not text.strip():
+    # No letters or digits (just arrows, bullets, emoji)? Nothing to speak: silent slide.
+    if not text.strip() or not re.search(r"\w", text):
         return None
     settings.cache_dir.mkdir(parents=True, exist_ok=True)
     order = [_edge, _gtts] if settings.tts_provider == "edge" else [_gtts, _edge]
@@ -46,6 +46,7 @@ def synth_one(text: str, lang: str, retries: int = 3) -> Path | None:
     for provider in order:
         cached = settings.cache_dir / f"{_key(provider, lang, text)}.mp3"
         if cached.exists() and cached.stat().st_size > 0:
+            cached.touch()      # mark as recently used so the 7-day cleanup keeps popular phrases
             return cached
         for attempt in range(retries):
             tmp = cached.with_name(f"{cached.stem}.{uuid.uuid4().hex}.tmp.mp3")
@@ -59,9 +60,9 @@ def synth_one(text: str, lang: str, retries: int = 3) -> Path | None:
                 last_err = e
                 tmp.unlink(missing_ok=True)
                 log.warning("TTS %s attempt %d failed: %s", provider.__name__, attempt + 1, e)
-                time.sleep(0.5 * 2 ** attempt)
+                if attempt < retries - 1:        # don't sleep after the last attempt
+                    time.sleep(0.5 * 2 ** attempt)
     raise PipelineError("Speech synthesis is temporarily unavailable. Please try again shortly.") from last_err
-
 
 def generate_audio_files(scripts: list[str], lang: str, report) -> list[Path | None]:
     results: list[Path | None] = [None] * len(scripts)

@@ -26,11 +26,15 @@ def _run(cmd: list[str]):
 
 
 def probe_duration(path: Path) -> float:
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
-        capture_output=True, text=True, check=True, timeout=30,
-    ).stdout.strip()
-    return float(out)
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)],
+            capture_output=True, text=True, check=True, timeout=30,
+        ).stdout.strip()
+        return float(out)
+    except (subprocess.SubprocessError, ValueError, FileNotFoundError):
+        path.unlink(missing_ok=True)     # a corrupt cached mp3 must not be reused forever
+        raise PipelineError("Could not read the generated audio. Please try again.")
 
 
 def make_segment(image: Path, audio: Path | None, out: Path) -> tuple[float, float]:
@@ -45,7 +49,7 @@ def make_segment(image: Path, audio: Path | None, out: Path) -> tuple[float, flo
     else:
         speech = 0.0
         audio_in = ["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"]
-    # seg = (speech + END_PAD) if audio else settings.silent_slide_seconds
+    seg = (speech + END_PAD) if audio else settings.silent_slide_seconds
     seg = math.ceil(seg * FPS) / FPS
 
     _run([
