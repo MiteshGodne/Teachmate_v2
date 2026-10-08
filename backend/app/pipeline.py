@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 from .config import settings
-from .errors import PipelineError
+from .errors import JobCancelled, PipelineError
 from .jobs import JobStore
 from .utils.audio_generator import generate_audio_files
 from .utils.file_validation import validate_upload
@@ -30,9 +30,13 @@ def run_pipeline(job_id: str, src: Path, ext: str, language: str, script_mode: s
     out_dir = job_dir / "out"
 
     def report(stage: str, pct: float):
+        # Called often, so it doubles as the cancel checkpoint.
+        if store.is_cancelled(job_id):
+            raise JobCancelled()
         store.update(job_id, stage=stage, progress=int(pct))
 
     try:
+        log.info("job=%s started ext=%s lang=%s", job_id, ext, language)
         store.update(job_id, status="running")
         report("validating", 5)
         validate_upload(src, ext)
@@ -62,17 +66,30 @@ def run_pipeline(job_id: str, src: Path, ext: str, language: str, script_mode: s
         if not pairs:
             raise PipelineError("All slides are hidden, so there is nothing to render.")
 
-        scripts = [pick_script(s, script_mode) for _, s in pairs]
+        scripts = [pick_script(s, script_mode)[: settings.max_script_chars].strip() for _, s in pairs]
+        if not any(scripts):
+            raise PipelineError("No narration text found. Add speaker notes, or use a deck with real text "
+                                "(scanned or image-only files can't be narrated).")
+        if sum(len(s) for s in scripts) > settings.max_total_chars:
+            raise PipelineError("This deck has too much text for one video. Try splitting it.")
+
         audios = generate_audio_files(scripts, language, report)
         video, srt, duration = build_video([i for i, _ in pairs], audios, scripts, work, out_dir, report)
 
+        report("encoding", 95)             # last chance to honour a cancel
         store.update(job_id, status="done", stage="done", progress=100,
                      video_path=str(video), srt_path=str(srt) if srt else None,
                      slides=len(pairs), duration=round(duration, 1))
+        log.info("job=%s done slides=%d duration=%.1fs", job_id, len(pairs), duration)
+    except JobCancelled:
+        log.info("job=%s cancelled", job_id)
+        store.update(job_id, status="cancelled", stage="cancelled")
+        shutil.rmtree(job_dir, ignore_errors=True)
     except PipelineError as e:
+        log.warning("job=%s failed: %s", job_id, e)
         store.update(job_id, status="failed", stage="failed", error=str(e))
     except Exception:
-        log.exception("Job %s crashed", job_id)
+        log.exception("job=%s crashed", job_id)
         store.update(job_id, status="failed", stage="failed", error="Something went wrong on our side.")
     finally:
         shutil.rmtree(work, ignore_errors=True)   # source file + intermediates are never kept
