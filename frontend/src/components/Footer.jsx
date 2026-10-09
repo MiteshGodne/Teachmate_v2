@@ -5,7 +5,7 @@ const Footer = () => (
   <footer className="footer">
     <div className="footer-container">
       <div className="footer-brand">
-        <h2>Teach-Mate</h2>
+        <h2>TeachMate</h2>
         <p>Convert your PowerPoint presentations to videos.</p>
       </div>
 
@@ -28,7 +28,7 @@ const Footer = () => (
     </div>
 
     <div className="footer-bottom">
-      <p>&copy; {new Date().getFullYear()} Teach-Mate. All rights reserved.</p>
+      <p>&copy; {new Date().getFullYear()} TeachMate. All rights reserved.</p>
     </div>
   </footer>
 );

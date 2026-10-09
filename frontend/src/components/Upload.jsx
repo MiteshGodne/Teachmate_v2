@@ -8,14 +8,15 @@ import { API_URL } from "../config";
 const DEFAULT_CFG = {
   max_upload_mb: 50,
   extensions: [".pptx", ".ppt", ".ppsx", ".odp", ".pdf"],
-  languages: [["en", "English"], ["hi", "Hindi"], ["mr", "Marathi"],
-              ["es", "Spanish"], ["fr", "French"], ["de", "German"]],
+  languages: [["en", "English"], ["hi", "Hindi"], ["mr", "Marathi"], ["es", "Spanish"], ["fr", "French"], ["de", "German"]],
 };
+
 const SCRIPT_MODES = [
   ["auto", "Speaker notes, else slide text"],
   ["notes", "Speaker notes only"],
   ["slide", "Slide text only"],
 ];
+
 const STAGES = {
   queued: "Waiting in queue…", validating: "Checking your file…",
   converting: "Converting format…", parsing: "Reading slides…",
@@ -27,11 +28,11 @@ const Upload = () => {
   const [cfg, setCfg] = useState(DEFAULT_CFG);
   const [file, setFile] = useState(null);
   const [language, setLanguage] = useState("en");
+  const [jobId, setJobId] = useState(null);
   const [scriptMode, setScriptMode] = useState("auto");
   const [dragActive, setDragActive] = useState(false);
   const [phase, setPhase] = useState("idle"); // idle | uploading | processing | done | error
   const [uploadPct, setUploadPct] = useState(0);
-  const [jobId, setJobId] = useState(null);
   const [error, setError] = useState("");
   const abortRef = useRef(null);
 
@@ -40,7 +41,7 @@ const Upload = () => {
 
   // Ask the backend for its limits so the UI never disagrees with the server
   useEffect(() => {
-    axios.get(`${API_URL}/api/config`).then(({ data }) => setCfg(data)).catch(() => {});
+    axios.get(`${API_URL}/api/config`).then(({ data }) => setCfg(data)).catch(() => { });
   }, []);
 
   // React to live job updates
@@ -84,14 +85,14 @@ const Upload = () => {
     setUploadPct(0);
     setError("");
     try {
-      // Don't set Content-Type manually: the browser must add the multipart boundary
+      // Don't set Content-Type manually, the browser must add the multipart boundary
       const { data } = await axios.post(`${API_URL}/api/jobs`, form, {
         signal: controller.signal,
         onUploadProgress: (e) => e.total && setUploadPct(Math.round((e.loaded * 100) / e.total)),
       });
       if (controller.signal.aborted) {
-        // User hit Cancel just as the server accepted the file: cancel that job too
-        axios.delete(`${API_URL}/api/jobs/${data.job_id}`).catch(() => {});
+        // cancelling job if user hit Cancel
+        axios.delete(`${API_URL}/api/jobs/${data.job_id}`).catch(() => { });
         return;
       }
       setPhase("processing");
@@ -105,29 +106,33 @@ const Upload = () => {
 
   const reset = () => {
     abortRef.current?.abort();
-    if (jobId) axios.delete(`${API_URL}/api/jobs/${jobId}`).catch(() => {});
+    if (jobId) axios.delete(`${API_URL}/api/jobs/${jobId}`).catch(() => { });
     setFile(null); setJobId(null); setError(""); setPhase("idle"); setUploadPct(0);
   };
 
   const progress = phase === "uploading" ? uploadPct : job?.progress ?? 0;
+
   let label;
-  if (phase === "uploading") label = uploadPct >= 100 ? "Finishing upload…" : `Uploading… ${uploadPct}%`;
+  if (phase === "uploading") 
+    label = uploadPct >= 100 ? "Finishing upload…" : `Uploading… ${uploadPct}%`;
   else if (job?.status === "queued")
     label = job.queue_position > 1 ? `Waiting in queue (position ${job.queue_position})…` : STAGES.queued;
-  else label = STAGES[job?.stage] ?? "Starting…";
+  else 
+    label = STAGES[job?.stage] ?? "Starting…";
+
   const base = `${API_URL}/api/jobs/${jobId}`;
 
   return (
     <div className="upload-page">
       <h1 className="upload-heading">Upload Your Slides</h1>
-
       <div
         className={`drag-drop-area ${dragActive ? "active" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
         onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
         onDrop={(e) => { e.preventDefault(); setDragActive(false); pickFile(e.dataTransfer.files?.[0]); }}
       >
-        <p>{file ? `Selected: ${file.name}` : `Drag and drop a presentation here, or click to browse (${cfg.extensions.join(", ")})`}</p>
+        <p>{file ? `Selected: ${file.name}` : `Drag and drop a presentation here, or click to browse the system.
+        Supported File Formats -  ${cfg.extensions.join(", ")}`}</p>
         <input
           type="file"
           aria-label="Choose a presentation file"
@@ -139,12 +144,12 @@ const Upload = () => {
       </div>
 
       <div className="options">
-        <label>Language
+        <label>Accents :
           <select value={language} onChange={(e) => setLanguage(e.target.value)} disabled={busy}>
             {cfg.languages.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
           </select>
         </label>
-        <label>Narration source
+        <label>Narration Source :
           <select value={scriptMode} onChange={(e) => setScriptMode(e.target.value)} disabled={busy}>
             {SCRIPT_MODES.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
           </select>
@@ -164,8 +169,7 @@ const Upload = () => {
 
       {busy && (
         <>
-          <div className="progress-bar" role="progressbar"
-               aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+          <div className="progress-bar" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
             <div className="progress" style={{ width: `${progress}%` }} />
           </div>
           <p className="status-text">{label}</p>
@@ -175,7 +179,7 @@ const Upload = () => {
       {phase === "done" && job && (
         <div className="result">
           <h2>Your lecture is ready</h2>
-          <p className="status-text">{job.slides} slides · {Math.round(job.duration)}s. Files are deleted after about an hour.</p>
+          <p className="status-text">{job.slides} slides · {Math.round(job.duration)}s. Files will get deleted automatically.</p>
           <VideoPlayer videoUrl={`${base}/video`} />
           <div className="action-buttons">
             <a className="upload-button" href={`${base}/video?download=1`}>Download MP4</a>

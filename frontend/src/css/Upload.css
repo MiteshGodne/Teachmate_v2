@@ -98,7 +98,6 @@
   transition: width 0.3s ease;
 }
 
-/* Responsive Styling */
 @media (max-width: 768px) {
   .upload-heading {
     font-size: 1.5rem;
@@ -195,5 +194,17 @@
   display: inline-block;
 }
 
-.video-wrap { display: flex; justify-content: center; padding: 1rem 0; }
-.video-el { width: 100%; max-width: 900px; max-height: 80vh; border-radius: 16px; background: #000; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+.video-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.video-el {
+  width: 100%;
+  max-width: 900px;
+  max-height: 80vh;
+  border-radius: 16px;
+  background: #000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, .2);
+}

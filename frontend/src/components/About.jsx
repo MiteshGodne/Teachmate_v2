@@ -13,20 +13,20 @@ const features = [
   ["Private by default", "Your upload is deleted as soon as processing ends; results expire after about an hour."],
 ];
 
-const stack = ["React + Vite", "FastAPI", "LibreOffice", "FFmpeg", "edge-tts / gTTS", "Docker"];
+const stack = ["React + Vite", "FastAPI", "LibreOffice", "FFmpeg", "edge-tts / gTTS", "Redis" , "Docker"];
 
 const About = () => (
   <div className="about-container">
     <section className="hero-section">
-      <h1>About Teach-Mate</h1>
+      <h1>About TeachMate ~</h1>
       <p>
-        TeachMate turns slide decks into narrated MP4 lectures. It was built to help
+        TeachMate turns ppts or pdfs into narrated MP4 lectures. It was built to help
         educators publish video lessons without recording anything.
       </p>
     </section>
 
     <section>
-      <h2>What it does</h2>
+      <h2>What it does ?</h2>
       <div className="feature-grid">
         {features.map(([title, text]) => (
           <div className="feature" key={title}>
@@ -38,16 +38,16 @@ const About = () => (
     </section>
 
     <section>
-      <h2>Built with</h2>
+      <h2>Built with ~</h2>
       <ul className="stack">
         {stack.map((s) => <li key={s}>{s}</li>)}
       </ul>
     </section>
 
     <section>
-      <h2>Who built it</h2>
+      <h2>Who built it ?</h2>
       <p>
-        Designed and developed by {AUTHOR.name} as a solo project.{" "}
+        Designed and Developed by {AUTHOR.name}. {" "}
         <a href={AUTHOR.github} target="_blank" rel="noopener noreferrer">View the source on GitHub</a>.
       </p>
     </section>
